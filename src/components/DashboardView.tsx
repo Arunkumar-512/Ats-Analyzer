@@ -56,7 +56,7 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
           resumeText: data.summary || "Fallback candidate profile matrix data...",
           jobDescription: localStorage.getItem("last_jd") || "Target technical engineer profile...", 
         }),
-        credentials: "include"
+        
       });
 
       const outcome = await res.json();
