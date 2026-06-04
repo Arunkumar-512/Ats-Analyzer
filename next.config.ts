@@ -1,12 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 🌟 Keep your existing PDF processing configuration:
-  experimental: {
-    serverComponentsExternalPackages: ["pdf-parse"],
-  },
+  // 🌟 THE FIX: Move pdf-parse out of experimental to remove the Vercel compilation warning
+  serverExternalPackages: ["pdf-parse"],
 
-  // 🌟 Add this block to allow GitHub profile pictures:
+  // 🌟 Keeps your existing configuration to allow GitHub profile pictures:
   images: {
     remotePatterns: [
       {
