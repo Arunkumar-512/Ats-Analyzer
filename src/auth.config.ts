@@ -3,7 +3,7 @@ import GitHub from "next-auth/providers/github";
 
 export const authConfig = {
   session: {
-    strategy: "jwt" as const, // 🌟 THE FIX: 'as const' locks this down as a literal type instead of a loose string
+    strategy: "jwt" as const,
   },
   providers: [
     GitHub({

@@ -12,7 +12,6 @@ declare module "next-auth" {
   }
 }
 
-// 🌟 Spreads your typed options configuration object directly into the initializer
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma as any),
   ...authConfig,
