@@ -1,4 +1,3 @@
-// src/auth.config.ts
 import GitHub from "next-auth/providers/github";
 
 export const authConfig = {
@@ -13,15 +12,11 @@ export const authConfig = {
   ],
   callbacks: {
     async jwt({ token, user }: { token: any; user?: any }) {
-      if (user && user.id) {
-        token.id = user.id as string;
-      }
+      if (user && user.id) token.id = user.id as string;
       return token;
     },
     async session({ session, token }: { session: any; token: any }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
-      }
+      if (session.user && token.id) session.user.id = token.id as string;
       return session;
     },
   },
