@@ -1,11 +1,19 @@
 // src/lib/prisma.ts
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma"; 
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// Reuse the global instance if it exists, or create a clean new one
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+// 💡 The Only Way in Prisma 7: Create a connection reference, pass it to PrismaPg, and hand that to the client constructor
+const createPrismaClient = () => {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const adapter = new PrismaPg(pool);
+  return new PrismaClient({ adapter });
+};
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
