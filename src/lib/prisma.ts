@@ -7,9 +7,11 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// 💡 The Only Way in Prisma 7: Create a connection reference, pass it to PrismaPg, and hand that to the client constructor
 const createPrismaClient = () => {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // 🌟 THE FIX: Provide a fallback string so it never passes 'undefined' to the connection pool during build-time compilation
+  const connectionString = process.env.DATABASE_URL || "postgresql://mock:mock@localhost:5432/mock";
+  
+  const pool = new Pool({ connectionString });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };

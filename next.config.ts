@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 🌟 THE FIX: Move pdf-parse out of experimental to remove the Vercel compilation warning
-  serverExternalPackages: ["pdf-parse"],
+  // 🌟 Enforce external compilation for database binaries and drivers
+  serverExternalPackages: ["pdf-parse", "@prisma/client", "@prisma/adapter-pg", "pg"],
 
-  // 🌟 Keeps your existing configuration to allow GitHub profile pictures:
   images: {
     remotePatterns: [
       {
