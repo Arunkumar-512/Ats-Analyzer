@@ -5,11 +5,12 @@ import { auth } from "@/auth";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// 🛠️ Updated request type signature with the NextAuth intersection type parameter
-export const POST = auth(async function POST(request: NextRequest & { auth: any }) {
+// 🌟 Keep the POST handler standard to prevent the Next.js compilation race condition
+export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate Request
-    if (!request.auth || !request.auth.user?.id) {
+    // 1. Authenticate Request Dynamically at Runtime
+    const session = await auth();
+    if (!session || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized access." }, { status: 401 });
     }
 
@@ -22,6 +23,10 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
       );
     }
 
+    // Explicitly cast destructured fields to strict strings for strictNullChecks stability
+    const safeJobDescription = jobDescription as string;
+    const safeResumeText = resumeText as string;
+
     // 2. Engineer the Custom Professional Prompt
     const systemInstruction = `
       You are an expert executive career coach and elite copywriter. 
@@ -32,10 +37,10 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
 
     const userPrompt = `
       Target Job Description Context:
-      ${jobDescription.trim()}
+      ${safeJobDescription.trim()}
 
       Candidate Resume Text:
-      ${resumeText.trim()}
+      ${safeResumeText.trim()}
 
       Generate a beautiful, polished cover letter text block with standard formal business layout spacing (Date, Hiring Manager, Salutation, Body Paragraphs, Sign-off). Do not include any extra conversational intro or outro text, just the cover letter itself.
     `;
@@ -46,7 +51,7 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
       contents: userPrompt,
       config: {
         systemInstruction: systemInstruction,
-        temperature: 0.7, // Slightly higher for fluid, natural professional storytelling prose
+        temperature: 0.7, 
       }
     });
 
@@ -61,4 +66,4 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
     console.error("Cover Letter Generator Error:", error);
     return NextResponse.json({ error: "Failed to generate tailored cover letter asset." }, { status: 500 });
   }
-});
+}
