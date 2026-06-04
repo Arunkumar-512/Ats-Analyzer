@@ -1,33 +1,19 @@
+// src/auth.ts
 import NextAuth, { type DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/prisma"; 
-import GitHub from "next-auth/providers/github";
+import { prisma } from "@/lib/prisma";
+import { authConfig } from "./auth.config";
 
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string; 
+      id: string;
     } & DefaultSession["user"];
   }
 }
 
+// 🌟 Spreads your typed options configuration object directly into the initializer
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma as any),
-  session: { strategy: "jwt" },
-  providers: [
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID || "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user && user.id) token.id = user.id as string;
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user && token.id) session.user.id = token.id as string;
-      return session;
-    },
-  },
+  ...authConfig,
 });
