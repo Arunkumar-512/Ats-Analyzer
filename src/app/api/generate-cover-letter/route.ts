@@ -5,7 +5,8 @@ import { auth } from "@/auth";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export const POST = auth(async function POST(request) {
+// 🛠️ Updated request type signature with the NextAuth intersection type parameter
+export const POST = auth(async function POST(request: NextRequest & { auth: any }) {
   try {
     // 1. Authenticate Request
     if (!request.auth || !request.auth.user?.id) {
@@ -31,10 +32,10 @@ export const POST = auth(async function POST(request) {
 
     const userPrompt = `
       Target Job Description Context:
-      ${jobDescription}
+      ${jobDescription.trim()}
 
       Candidate Resume Text:
-      ${resumeText}
+      ${resumeText.trim()}
 
       Generate a beautiful, polished cover letter text block with standard formal business layout spacing (Date, Hiring Manager, Salutation, Body Paragraphs, Sign-off). Do not include any extra conversational intro or outro text, just the cover letter itself.
     `;

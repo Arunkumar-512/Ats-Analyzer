@@ -7,8 +7,8 @@ import { auth } from "@/auth";
 // Initialize the Google Gen AI client using your environment variable
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// 🌟 Wrap the POST handler in auth() to intercept cookies and check user sessions
-export const POST = auth(async function POST(request) {
+// 🌟 Wrap the POST handler in auth() and explicitly type the request to recognize .auth properties
+export const POST = auth(async function POST(request: NextRequest & { auth: any }) {
   try {
     // 1. Multi-Tenant Guard: Reject unauthorized API requests instantly
     if (!request.auth || !request.auth.user?.id) {
@@ -18,22 +18,27 @@ export const POST = auth(async function POST(request) {
       );
     }
 
-    const userId = request.auth.user.id;
+    // Force TypeScript to treat this as a strict string now that we've verified its existence
+    const userId = request.auth.user.id as string;
 
     // 2. Extract incoming request body payload parameters
     const { resumeText, jobDescription, fileName } = await request.json();
 
     // 🛡️ Edge Case Guardrail 1: Check for missing, empty, or unviably brief resume text layout
-    if (!resumeText || resumeText.trim().length < 100) {
+    if (!resumeText || (resumeText as string).trim().length < 100) {
       return NextResponse.json(
         { error: "The extracted resume profile content is too short to compile a viable tactical gap assessment matrix." },
         { status: 400 }
       );
     }
 
+    // Explicitly cast to clean string variables now that the runtime validation above has passed
+    const safeResumeText = resumeText as string;
+    const safeFileName = (fileName as string) || "Untitled_Resume.pdf";
+
     // 🛡️ Edge Case Guardrail 2: Sanitize target job descriptions to fall back gracefully if junk/empty inputs are provided
-    const sanitizedJobDescription = jobDescription && jobDescription.trim().length > 10
-      ? jobDescription.trim()
+    const sanitizedJobDescription = jobDescription && (jobDescription as string).trim().length > 10
+      ? (jobDescription as string).trim()
       : null;
 
     // Define the rigid JSON schema structure for the model output
@@ -84,7 +89,7 @@ export const POST = auth(async function POST(request) {
 
     // Construct the context-aware prompt block using our sanitized variable configuration
     const targetedJobPrompt = sanitizedJobDescription ? `Target Job Description Context:\n${sanitizedJobDescription}\n\n` : "";
-    const userPrompt = `${targetedJobPrompt}Candidate Extracted Resume Text:\n${resumeText.trim()}`;
+    const userPrompt = `${targetedJobPrompt}Candidate Extracted Resume Text:\n${safeResumeText.trim()}`;
 
     // Execute the Gen AI request targeting gemini-2.5-flash
     const response = await ai.models.generateContent({
@@ -106,12 +111,12 @@ export const POST = auth(async function POST(request) {
     // Safely parse the valid string back into an accessible JSON node block
     const analysisData: AnalysisResponse = JSON.parse(responseText);
 
-    // 3. Save the payload directly into pgAdmin tied to this user's account
+    // 3. Save the payload directly into the database tied to this user's account
     const savedResumeRecord = await prisma.resume.create({
       data: {
-        userId: userId, // 🔗 Multi-Tenant Link
-        fileName: fileName || "Untitled_Resume.pdf",
-        extractedText: resumeText,
+        userId: userId, // 🔗 Multi-Tenant Link (Strict string guaranteed)
+        fileName: safeFileName,
+        extractedText: safeResumeText, // 🔗 Strict string guaranteed
         matchScore: analysisData.matchScore,
         rawAnalysisJson: responseText, // Keep stringified format for clean storage blocks
       },

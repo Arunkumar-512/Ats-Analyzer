@@ -14,7 +14,7 @@ export default function Navbar() {
         {/* Brand Logo Identity */}
         <div className="flex items-center gap-2">
           <span className="font-bold font-mono text-sm tracking-wider uppercase text-slate-200">
-            Resume<span className="text-slate-400">.AI</span>
+            Resume<span className="text-slate-400">.Metrics</span>
           </span>
         </div>
 
