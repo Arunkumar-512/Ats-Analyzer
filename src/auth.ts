@@ -12,8 +12,12 @@ declare module "next-auth" {
   }
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  // Bypasses the custom-generated path type mismatch smoothly
+const authInstance = NextAuth({
   adapter: PrismaAdapter(prisma as any),
   ...authConfig,
 });
+
+export const handlers = authInstance.handlers;
+export const auth = authInstance.auth;
+export const signIn = authInstance.signIn;
+export const signOut = authInstance.signOut;
