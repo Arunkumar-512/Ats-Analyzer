@@ -7,29 +7,34 @@ import { auth } from "@/auth";
 export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate Request
+    // We pass the request to auth() to ensure it reads the headers/cookies correctly
     const session = await auth();
+    
     if (!session || !session.user?.id) {
+      console.error("AUTH_FAILURE: Session is null or user ID missing.");
       return NextResponse.json(
-        { error: "Unauthorized. Please connect your developer workspace." },
+        { error: "Unauthorized. Please ensure you are logged in." },
         { status: 401 }
       );
     }
 
-    // 2. Initialize client INSIDE the function 
-    // This ensures Vercel's environment variables are correctly loaded at runtime
+    // 2. Initialize Gemini client
     if (!process.env.GEMINI_API_KEY) {
-      console.error("CRITICAL: GEMINI_API_KEY is missing from environment variables!");
-      throw new Error("Server configuration error.");
+      throw new Error("GEMINI_API_KEY environment variable is not set.");
     }
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const userId = session.user.id as string;
-    const { resumeText, jobDescription, fileName } = await request.json();
+    // 3. Parse and Validate Body
+    const body = await request.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
 
-    // 🛡️ Validation
-    if (!resumeText || (resumeText as string).trim().length < 100) {
+    const { resumeText, jobDescription, fileName } = body;
+
+    if (!resumeText || resumeText.trim().length < 100) {
       return NextResponse.json(
-        { error: "The extracted resume profile content is too short to compile a viable tactical gap assessment matrix." },
+        { error: "Resume text is too short." },
         { status: 400 }
       );
     }
@@ -44,9 +49,9 @@ export async function POST(request: NextRequest) {
     const jsonSchema = {
       type: Type.OBJECT,
       properties: {
-        matchScore: { type: Type.INTEGER, description: "Score out of 100" },
-        summary: { type: Type.STRING, description: "Executive summary" },
-        strengths: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of strengths" },
+        matchScore: { type: Type.INTEGER },
+        summary: { type: Type.STRING },
+        strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
         keywordGaps: {
           type: Type.ARRAY,
           items: {
@@ -58,22 +63,21 @@ export async function POST(request: NextRequest) {
             required: ["keyword", "importance"]
           }
         },
-        actionItems: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Optimization tips" }
+        actionItems: { type: Type.ARRAY, items: { type: Type.STRING } }
       },
       required: ["matchScore", "summary", "strengths", "keywordGaps", "actionItems"]
     };
 
-    const systemInstruction = `You are an elite corporate technical recruiter and expert ATS optimization matrix. Respond strictly with a valid JSON structure following the exact schema provided. Do not include markdown code wrappers or extra conversational prose.`;
+    const systemInstruction = `You are an elite corporate technical recruiter. Respond strictly with valid JSON following the schema.`;
 
-    const targetedJobPrompt = sanitizedJobDescription ? `Target Job Description Context:\n${sanitizedJobDescription}\n\n` : "";
-    const userPrompt = `${targetedJobPrompt}Candidate Extracted Resume Text:\n${safeResumeText.trim()}`;
+    const userPrompt = `${sanitizedJobDescription ? `Job: ${sanitizedJobDescription}\n\n` : ""}Resume: ${safeResumeText.trim()}`;
 
-    // Execute Gen AI Request
+    // 4. Generate Content
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash", // Verified model name
+      model: "gemini-1.5-flash",
       contents: userPrompt,
       config: {
-        systemInstruction: systemInstruction,
+        systemInstruction,
         responseMimeType: "application/json",
         responseSchema: jsonSchema,
         temperature: 0.2,
@@ -81,14 +85,14 @@ export async function POST(request: NextRequest) {
     });
 
     const responseText = response.text;
-    if (!responseText) throw new Error("Empty data matrix returned.");
+    if (!responseText) throw new Error("Model returned empty response.");
 
     const analysisData: AnalysisResponse = JSON.parse(responseText);
 
-    // 3. Save to Database
+    // 5. Save to Database
     const savedResumeRecord = await prisma.resume.create({
       data: {
-        userId: userId,
+        userId: session.user.id,
         fileName: safeFileName,
         extractedText: safeResumeText,
         matchScore: analysisData.matchScore,
@@ -96,16 +100,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      resumeId: savedResumeRecord.id,
-      ...analysisData
-    }, { status: 200 });
+    return NextResponse.json({ success: true, resumeId: savedResumeRecord.id, ...analysisData });
 
   } catch (error: any) {
-    console.error("Gemini Execution Error:", error);
+    console.error("ANALYSIS_ROUTE_ERROR:", error);
     return NextResponse.json(
-      { error: "AI processing sequence encountered a validation layout fault." },
+      { error: error.message || "An unexpected error occurred." },
       { status: 500 }
     );
   }

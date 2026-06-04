@@ -29,6 +29,7 @@ export default function Home() {
       const parseRes = await fetch("/api/parse", {
         method: "POST",
         body: parseFormData,
+        credentials: "include"
       });
 
       const parseData = await parseRes.json();
@@ -48,6 +49,7 @@ export default function Home() {
           jobDescription,
           fileName: file.name,
         }),
+        credentials: "include"
       });
 
       const analyzeData = await analyzeRes.json();

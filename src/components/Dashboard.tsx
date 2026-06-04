@@ -10,7 +10,7 @@ export default function Dashboard() {
 
   // Example of using it when processing the response
   const handleAnalyze = async (text: string) => {
-    const res = await fetch("/api/analyze", { method: "POST", body: JSON.stringify({ resumeText: text }) });
+    const res = await fetch("/api/analyze", { method: "POST", body: JSON.stringify({ resumeText: text }),credentials: "include" });
     const data: AnalysisResponse = await res.json();
     setAnalysisResult(data);
   };
