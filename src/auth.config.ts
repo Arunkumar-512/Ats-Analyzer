@@ -1,6 +1,8 @@
+// src/auth.config.ts
 import GitHub from "next-auth/providers/github";
 
 export const authConfig = {
+  secret: process.env.AUTH_SECRET || "a_temporary_32_character_fallback_secret_string", // 🌟 Hard fallback protection
   session: {
     strategy: "jwt" as const,
   },
