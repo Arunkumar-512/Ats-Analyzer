@@ -1,17 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
+import { prisma } from "@/lib/prisma";
 import { AnalysisResponse } from "@/types/analysis";
+import { auth } from "@/auth";
 
 // Initialize the Google Gen AI client using your environment variable
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export async function POST(request: NextRequest) {
+// 🌟 Wrap the POST handler in auth() to intercept cookies and check user sessions
+export const POST = auth(async function POST(request) {
   try {
-    const { resumeText, jobDescription } = await request.json();
-
-    if (!resumeText) {
-      return NextResponse.json({ error: "Missing resume text layout." }, { status: 400 });
+    // 1. Multi-Tenant Guard: Reject unauthorized API requests instantly
+    if (!request.auth || !request.auth.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please connect your developer workspace." },
+        { status: 401 }
+      );
     }
+
+    const userId = request.auth.user.id;
+
+    // 2. Extract incoming request body payload parameters
+    const { resumeText, jobDescription, fileName } = await request.json();
+
+    // 🛡️ Edge Case Guardrail 1: Check for missing, empty, or unviably brief resume text layout
+    if (!resumeText || resumeText.trim().length < 100) {
+      return NextResponse.json(
+        { error: "The extracted resume profile content is too short to compile a viable tactical gap assessment matrix." },
+        { status: 400 }
+      );
+    }
+
+    // 🛡️ Edge Case Guardrail 2: Sanitize target job descriptions to fall back gracefully if junk/empty inputs are provided
+    const sanitizedJobDescription = jobDescription && jobDescription.trim().length > 10
+      ? jobDescription.trim()
+      : null;
 
     // Define the rigid JSON schema structure for the model output
     const jsonSchema = {
@@ -59,17 +82,16 @@ export async function POST(request: NextRequest) {
       You must respond strictly with a valid JSON structure following the exact schema provided. Do not include markdown code wrappers or extra conversational prose.
     `;
 
-    // Construct the context-aware prompt block
-    const targetedJobPrompt = jobDescription ? `Target Job Description Context:\n${jobDescription}\n\n` : "";
-    const userPrompt = `${targetedJobPrompt}Candidate Extracted Resume Text:\n${resumeText}`;
+    // Construct the context-aware prompt block using our sanitized variable configuration
+    const targetedJobPrompt = sanitizedJobDescription ? `Target Job Description Context:\n${sanitizedJobDescription}\n\n` : "";
+    const userPrompt = `${targetedJobPrompt}Candidate Extracted Resume Text:\n${resumeText.trim()}`;
 
-    // Execute the Gen AI request targeting gemini-2.5-pro or gemini-2.5-flash
+    // Execute the Gen AI request targeting gemini-2.5-flash
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: userPrompt,
       config: {
         systemInstruction: systemInstruction,
-        // Enforce structural output compliance
         responseMimeType: "application/json",
         responseSchema: jsonSchema,
         temperature: 0.2, // Kept low for consistent analytical outcomes
@@ -84,7 +106,23 @@ export async function POST(request: NextRequest) {
     // Safely parse the valid string back into an accessible JSON node block
     const analysisData: AnalysisResponse = JSON.parse(responseText);
 
-    return NextResponse.json(analysisData, { status: 200 });
+    // 3. Save the payload directly into pgAdmin tied to this user's account
+    const savedResumeRecord = await prisma.resume.create({
+      data: {
+        userId: userId, // 🔗 Multi-Tenant Link
+        fileName: fileName || "Untitled_Resume.pdf",
+        extractedText: resumeText,
+        matchScore: analysisData.matchScore,
+        rawAnalysisJson: responseText, // Keep stringified format for clean storage blocks
+      },
+    });
+
+    // 4. Return both the parsing status and database metadata to the frontend UI
+    return NextResponse.json({
+      success: true,
+      resumeId: savedResumeRecord.id,
+      ...analysisData
+    }, { status: 200 });
 
   } catch (error: any) {
     console.error("Gemini Execution Error:", error);
@@ -93,4 +131,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

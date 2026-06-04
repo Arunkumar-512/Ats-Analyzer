@@ -59,10 +59,10 @@ export default function DropZone({ onFileSelect, status, error }: DropZoneProps)
         onClick={() => status === "idle" && fileInputRef.current?.click()}
         className={`border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center transition-all duration-300 ${
           status === "parsing" || status === "analyzing" 
-            ? "border-amber-500 bg-amber-500/5 animate-pulse cursor-wait" :
+            ? "border-slate-500 bg-white/5 animate-pulse cursor-wait" :
           status === "success" 
             ? "border-emerald-500 bg-emerald-500/5 cursor-default" :
-            "border-slate-700 bg-slate-900 hover:border-slate-500 cursor-pointer"
+            "border-slate-700 bg-white/80 hover:bg-white/80 hover:border-slate-500 cursor-pointer"
         }`}
       >
         <input 
@@ -75,10 +75,10 @@ export default function DropZone({ onFileSelect, status, error }: DropZoneProps)
         />
 
         <div className="text-4xl mb-4">
-          {status === "parsing" && "⚙️"}
-          {status === "analyzing" && "🧠"}
-          {status === "success" && "✅"}
-          {status === "idle" && "📄"}
+          {status === "parsing" && <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>}
+          {status === "analyzing" && <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>}
+          {status === "success" && <div className="text-emerald-400">✅</div>}
+          {status === "idle" && <div className="text-slate-900">📄</div>}
         </div>
         
         <div className="text-center">
@@ -92,10 +92,10 @@ export default function DropZone({ onFileSelect, status, error }: DropZoneProps)
           )}
           {status === "idle" && (
             <>
-              <p className="text-lg font-semibold text-slate-200">
-                Drag & drop your resume, or <span className="text-emerald-400">browse</span>
+              <p className="text-lg font-semibold text-slate-900">
+                Drag & drop your resume, or <span className="text-emerald-600">browse</span>
               </p>
-              <p className="text-sm text-slate-400 mt-2">PDF files up to 5MB</p>
+              <p className="text-sm text-slate-500 mt-2">PDF files up to 5MB</p>
             </>
           )}
         </div>
