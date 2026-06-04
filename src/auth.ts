@@ -13,8 +13,8 @@ declare module "next-auth" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // 🌟 Clean integration—no custom proxy wrapper to avoid breaking internal types
-  adapter: PrismaAdapter(prisma),
+  // 🌟 THE FIX: Typecast as 'any' to bridge the custom generation path type mismatch
+  adapter: PrismaAdapter(prisma as any),
   session: {
     strategy: "jwt", 
   },
