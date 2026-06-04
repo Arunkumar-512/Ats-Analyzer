@@ -1,8 +1,9 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SessionProvider } from "next-auth/react"; // 🌟 Import Provider
-import Navbar from "@/components/Navbar"; // 🌟 Import Navbar
+import AuthProvider from "@/components/AuthProvider"; // 🌟 Import our safe Client Wrapper
+import Navbar from "@/components/Navbar"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +31,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-      <SessionProvider>
-        <Navbar />
-        {children}
-        </SessionProvider>
+        {/* 💡 Using the dedicated Client component wrapper allows Next.js to prerender static pages like /_not-found without crashing */}
+        <AuthProvider>
+          <Navbar />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
