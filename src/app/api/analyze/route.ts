@@ -7,11 +7,12 @@ import { auth } from "@/auth";
 // Initialize the Google Gen AI client using your environment variable
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// 🌟 Wrap the POST handler in auth() and explicitly type the request to recognize .auth properties
-export const POST = auth(async function POST(request: NextRequest & { auth: any }) {
+// 🌟 Keep the POST handler standard to prevent the Next.js compilation race condition
+export async function POST(request: NextRequest) {
   try {
-    // 1. Multi-Tenant Guard: Reject unauthorized API requests instantly
-    if (!request.auth || !request.auth.user?.id) {
+    // 1. Authenticate Request Dynamically at Runtime
+    const session = await auth();
+    if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized. Please connect your developer workspace." },
         { status: 401 }
@@ -19,7 +20,7 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
     }
 
     // Force TypeScript to treat this as a strict string now that we've verified its existence
-    const userId = request.auth.user.id as string;
+    const userId = session.user.id as string;
 
     // 2. Extract incoming request body payload parameters
     const { resumeText, jobDescription, fileName } = await request.json();
@@ -99,7 +100,7 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
         systemInstruction: systemInstruction,
         responseMimeType: "application/json",
         responseSchema: jsonSchema,
-        temperature: 0.2, // Kept low for consistent analytical outcomes
+        temperature: 0.2, 
       }
     });
 
@@ -114,11 +115,11 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
     // 3. Save the payload directly into the database tied to this user's account
     const savedResumeRecord = await prisma.resume.create({
       data: {
-        userId: userId, // 🔗 Multi-Tenant Link (Strict string guaranteed)
+        userId: userId, 
         fileName: safeFileName,
-        extractedText: safeResumeText, // 🔗 Strict string guaranteed
+        extractedText: safeResumeText, 
         matchScore: analysisData.matchScore,
-        rawAnalysisJson: responseText, // Keep stringified format for clean storage blocks
+        rawAnalysisJson: responseText, 
       },
     });
 
@@ -136,4 +137,4 @@ export const POST = auth(async function POST(request: NextRequest & { auth: any 
       { status: 500 }
     );
   }
-});
+}
