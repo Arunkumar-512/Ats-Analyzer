@@ -9,7 +9,6 @@ interface DashboardViewProps {
   onReset: () => void;
 }
 
-// Animation Variants for Cascading Stagger Effects
 const containerVariants = {
   hidden: { opacity: 0 },
   show: {
@@ -24,7 +23,6 @@ const itemVariants: Variants = {
 };
 
 export default function DashboardView({ data, onReset }: DashboardViewProps) {
-  // --- Cover Letter Studio State Matrix ---
   const [isGenerating, setIsGenerating] = useState(false);
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -44,7 +42,6 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
     return "text-rose-400 stroke-rose-500";
   };
 
-  // 🤖 Dynamic Gemini Prose Trigger Pipeline
   const handleGenerateLetter = async () => {
     setIsGenerating(true);
     setGenError(null);
@@ -77,12 +74,10 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // 🌟 Clean native browser invocation
   const handlePrint = () => {
     window.print();
   };
 
-  // SVG Circular Math Constants
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (data.matchScore / 100) * circumference;
@@ -94,11 +89,9 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
       animate="show"
       className="w-full max-w-5xl mx-auto p-6 space-y-6 print:p-0"
     >
-      {/* Header Row (Hidden during PDF download print) */}
       <motion.div variants={itemVariants} className="flex items-center justify-between border-b border-slate-900 pb-5 print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 tracking-tight">Analysis Engine Dashboard</h1>
-          <p className="text-xs font-mono text-slate-500 mt-1 uppercase tracking-wider">Gemini Architectural Assessment Matrix</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -106,13 +99,11 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
           onClick={onReset}
           className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 font-medium rounded-xl text-sm transition-all shadow-lg"
         >
-          🔄 Reset Pipeline
+          Reset
         </motion.button>
       </motion.div>
 
-      {/* Grid: Animated Score Ring + Summary Card (Hidden during PDF download print) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:hidden">
-        {/* SVG Progress Circle Card */}
         <motion.div variants={itemVariants} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center shadow-xl">
           <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-slate-500 mb-4">Match Core Rating</span>
           <div className="relative flex items-center justify-center w-36 h-36">
@@ -135,19 +126,17 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
           </div>
         </motion.div>
 
-        {/* Executive Summary Card */}
+        {/* Summary Card */}
         <motion.div variants={itemVariants} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl md:col-span-2 flex flex-col justify-center shadow-xl">
-          <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-slate-500 mb-3">Executive Summary Insight</span>
+          <span className="text-[10px] font-mono font-bold tracking-widest uppercase text-slate-500 mb-3">Summary Insight</span>
           <p className="text-slate-300 leading-relaxed text-sm font-normal">{data.summary}</p>
         </motion.div>
       </div>
 
-      {/* Grid: Core Strengths + Keyword Deficits (Hidden during PDF download print) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:hidden">
-        {/* Core Strengths */}
         <motion.div variants={itemVariants} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-            ✨ Detected Strengths
+            Detected Strengths
           </h3>
           <ul className="space-y-3">
             {data.strengths.map((strength, index) => (
@@ -163,10 +152,9 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
           </ul>
         </motion.div>
 
-        {/* Keyword Gaps */}
         <motion.div variants={itemVariants} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-rose-400 flex items-center gap-2">
-            ⚠️ Language Deficit Matrix
+            Language Deficit 
           </h3>
           <div className="flex flex-wrap gap-2.5">
             {data.keywordGaps.map((item, index) => (
@@ -185,10 +173,9 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
         </motion.div>
       </div>
 
-      {/* Action Items Roadmap (Hidden during PDF download print) */}
       <motion.div variants={itemVariants} className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl print:hidden">
         <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
-          🛠️ Concrete Optimization Roadmap
+          Concrete Optimization Roadmap
         </h3>
         <div className="space-y-3">
           {data.actionItems.map((action, index) => (
@@ -206,7 +193,6 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
         </div>
       </motion.div>
 
-      {/* Cover Letter Tailoring Studio Area */}
       <motion.div 
         variants={itemVariants} 
         className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl print:border-none print:bg-transparent print:p-0 print:shadow-none"
@@ -214,7 +200,7 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
           <div>
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
-              🚀 Cover Letter Tailoring Studio
+              Cover Letter Tailoring Studio
             </h3>
             <p className="text-[11px] text-slate-500 mt-1">
               Draft an optimal, high-impact application cover letter matching your profile metrics directly to this role.
@@ -240,27 +226,25 @@ export default function DashboardView({ data, onReset }: DashboardViewProps) {
 
         {genError && (
           <p className="text-xs font-mono text-rose-400 bg-rose-500/5 border border-rose-500/10 p-3 rounded-xl mt-2 print:hidden">
-            ⚠️ {genError}
+             {genError}
           </p>
         )}
 
         {coverLetter && (
           <div className="mt-4 border border-slate-950 bg-slate-950/40 rounded-xl p-5 relative group animate-fade-in print:mt-0 print:border-none print:bg-transparent print:p-0">
-            {/* Control Toolbar Cluster (Hidden automatically during print) */}
             <div className="absolute top-4 right-4 z-10 flex items-center gap-2 print:hidden">
               <button
                 onClick={handleCopy}
                 className="px-3 py-1.5 text-[10px] font-mono font-bold rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition-all flex items-center gap-1.5"
               >
-                {copied ? "✨ Copied!" : "📋 Copy Layout"}
+                {copied ? "Copied!" : "Copy Layout"}
               </button>
               
-              {/* 🌟 NEW: The Live-Generation Print Pipeline Option Trigger */}
               <button
                 onClick={handlePrint}
                 className="px-3 py-1.5 text-[10px] font-mono font-bold rounded-lg bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-400 transition-all flex items-center gap-1.5 shadow-md"
               >
-                🖨️ Download PDF
+                Download PDF
               </button>
             </div>
             

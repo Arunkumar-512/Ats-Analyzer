@@ -1,25 +1,18 @@
-// app/dashboard/page.tsx
-import React from "react";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import WorkspaceListClient from "@/components/WorkspaceListClient";
 
-// 🌟 THE PRODUCTION FIX: Force this route to be evaluated dynamically at runtime.
-// This prevents the Next.js static engine from checking auth() during compilation.
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-    // 1. Server-side session authentication check
     const session = await auth();
     if (!session?.user?.id) {
         redirect("/");
     }
 
-    // Force cast to strict string for compilation safety parameters 
     const currentUserId = session.user.id as string;
 
-    // 2. Query only the resumes belonging strictly to this user context
     const userResumes = await prisma.resume.findMany({
         where: { userId: currentUserId },
         orderBy: { createdAt: "desc" },
@@ -42,7 +35,6 @@ export default async function DashboardPage() {
                         <p className="text-sm text-slate-500 font-mono">No resumes processed in this account workspace yet.</p>
                     </div>
                 ) : (
-                    /* Stream the fetched database array directly to our interactive UI component */
                     <WorkspaceListClient initialResumes={userResumes} />
                 )}
             </main>

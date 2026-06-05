@@ -70,7 +70,6 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 pt-30 px-4 py-12 text-stone-800 print:bg-white print:text-black print:py-0 print:px-0">
-      {/* Background Glow */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/4 top-0 h-96 w-96 rounded-full bg-slate-200/30 blur-3xl" />
         <div className="absolute right-1/4 bottom-0 h-96 w-96 rounded-full bg-slate-200/30 blur-3xl" />

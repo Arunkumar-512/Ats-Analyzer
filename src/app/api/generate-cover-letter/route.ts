@@ -5,10 +5,9 @@ import { auth } from "@/auth";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// 🌟 Keep the POST handler standard to prevent the Next.js compilation race condition
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate Request Dynamically at Runtime
+    // Authenticate Request Dynamically at Runtime
     const session = await auth();
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized access." }, { status: 401 });
@@ -23,11 +22,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Explicitly cast destructured fields to strict strings for strictNullChecks stability
     const safeJobDescription = jobDescription as string;
     const safeResumeText = resumeText as string;
 
-    // 2. Engineer the Custom Professional Prompt
+    // Engineer the Custom Professional Prompt
     const systemInstruction = `
       You are an expert executive career coach and elite copywriter. 
       Your task is to write a highly tailored, persuasive, and professional cover letter based on a candidate's resume text and a target job description.
@@ -45,7 +43,7 @@ export async function POST(request: NextRequest) {
       Generate a beautiful, polished cover letter text block with standard formal business layout spacing (Date, Hiring Manager, Salutation, Body Paragraphs, Sign-off). Do not include any extra conversational intro or outro text, just the cover letter itself.
     `;
 
-    // 3. Request Prose Generation from Gemini
+    // Request Prose Generation from Gemini
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: userPrompt,

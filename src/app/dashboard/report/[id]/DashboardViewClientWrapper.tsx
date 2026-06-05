@@ -25,7 +25,6 @@ export default function DashboardViewClientWrapper({ initialData }: DashboardVie
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // 🌟 Clean CSS-print driver invocation
   const handlePrint = () => {
     window.print();
   };
@@ -33,9 +32,7 @@ export default function DashboardViewClientWrapper({ initialData }: DashboardVie
   return (
     <div className="max-w-5xl mx-auto w-full mt-6 space-y-8 font-sans">
       
-      {/* SECTION 1: Metrics Overview Grid (Hidden during PDF download print) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:hidden">
-        {/* Match Ring Card */}
         <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
           <div className="relative w-28 h-28 flex items-center justify-center rounded-full border-4 border-slate-800">
             <span className="text-2xl font-extrabold text-emerald-400 font-mono">
@@ -45,14 +42,12 @@ export default function DashboardViewClientWrapper({ initialData }: DashboardVie
           <h4 className="text-xs font-mono text-slate-400 mt-4 uppercase tracking-wider">Overall Match Vector</h4>
         </div>
 
-        {/* Executive Overview Summary */}
         <div className="md:col-span-2 bg-slate-900/40 border border-slate-900 rounded-2xl p-6">
           <h3 className="text-sm font-bold font-mono uppercase text-slate-200 mb-3 tracking-tight">Executive Assessment</h3>
           <p className="text-xs text-slate-400 leading-relaxed font-sans">{initialData.summary}</p>
         </div>
       </div>
 
-      {/* SECTION 2: Gaps & Actions Lists (Hidden during PDF download print) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:hidden">
         <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-6">
           <h3 className="text-sm font-bold font-mono uppercase text-rose-400 mb-3 tracking-tight">🚨 Key Skill Deficits</h3>
@@ -76,10 +71,8 @@ export default function DashboardViewClientWrapper({ initialData }: DashboardVie
         </div>
       </div>
 
-      {/* SECTION 3: The Custom Cover Letter Section */}
       <div className="border border-slate-900 bg-slate-900/20 rounded-2xl overflow-hidden print:border-none print:bg-transparent print:p-0">
         
-        {/* Controls Toolbar Header (Hidden during PDF print export) */}
         <div className="bg-slate-950/60 border-b border-slate-900 px-6 py-4 flex flex-wrap justify-between items-center gap-3 print:hidden">
           <div>
             <h3 className="text-sm font-bold font-mono text-slate-200 uppercase tracking-tight">✉️ Tailored Cover Letter</h3>
@@ -101,7 +94,6 @@ export default function DashboardViewClientWrapper({ initialData }: DashboardVie
           </div>
         </div>
 
-        {/* Dynamic Presentation Canvas */}
         <div className="p-8 md:p-10 bg-slate-950/30 font-sans print:bg-white print:text-black print:p-0">
           <div className="max-w-2xl mx-auto text-sm text-slate-300 leading-relaxed whitespace-pre-wrap select-text selection:bg-emerald-500/30 font-serif print:text-neutral-900 print:leading-normal">
             {coverLetterText}

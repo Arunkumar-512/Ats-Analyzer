@@ -6,13 +6,10 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-// 🌟 FIX: Only initialize the pool if we are in an environment where we have a URL,
-// or use a safe fallback to prevent the build worker from crashing.
 const connectionString = process.env.DATABASE_URL || "postgresql://mock:mock@localhost:5432/mock";
 
 const pool = new Pool({ 
   connectionString:process.env.DATABASE_URL,
-  // Neon-specific optimization: recommended for serverless connectivity
   max: 10 
 });
 

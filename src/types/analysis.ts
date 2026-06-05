@@ -1,4 +1,4 @@
-// types/analysis.ts
+
 
 export interface KeywordGap {
   keyword: string;

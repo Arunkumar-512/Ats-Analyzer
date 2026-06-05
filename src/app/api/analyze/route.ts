@@ -6,21 +6,19 @@ import { auth } from "@/auth";
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate
+    // Authenticate
     const session = await auth();
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    // 2. Defensive User Sync (Hardened)
+    // Defensive User Sync (Hardened)
     let dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
     if (!dbUser) {
       try {
-        // We sanitize the email: only use it if it's a valid non-empty string.
-        // This prevents unique constraint violations from empty strings.
         const email = (session.user.email && session.user.email.trim() !== "") 
                       ? session.user.email 
                       : null;
@@ -29,11 +27,10 @@ export async function POST(request: NextRequest) {
           data: {
             id: session.user.id,
             name: session.user.name || "Mobile User",
-            email: email, // Null is allowed now that schema is String?
+            email: email,
           },
         });
       } catch (createError: any) {
-        // If creation fails due to a race condition (user exists now), fetch again
         dbUser = await prisma.user.findUnique({
           where: { id: session.user.id },
         });
@@ -45,11 +42,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Initialize Gemini
+    // Initialize Gemini
     if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY missing.");
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    // 4. Parse Body
+    // Parse Body
     const body = await request.json().catch(() => null);
     if (!body) return NextResponse.json({ error: "Invalid body." }, { status: 400 });
 
@@ -58,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Resume text too short." }, { status: 400 });
     }
 
-    // 5. Generate Content
+    // Generate Content
     const jsonSchema = {
       type: Type.OBJECT,
       properties: {
@@ -97,7 +94,7 @@ export async function POST(request: NextRequest) {
     if (!rawText) throw new Error("Empty response from AI.");
     const analysisData: AnalysisResponse = JSON.parse(rawText);
 
-    // 6. Save Resume
+    // Save Resume
     const savedResumeRecord = await prisma.resume.create({
       data: {
         userId: dbUser.id,

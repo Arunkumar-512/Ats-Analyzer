@@ -2,14 +2,12 @@
 
 import React, { useState, useRef } from "react";
 
-// 🌟 Clean, explicit types for our component communication boundary
 interface DropZoneProps {
   onFileSelect: (file: File) => void;
   status: "idle" | "parsing" | "analyzing" | "success";
   error: string | null;
 }
 
-// 🌟 Pass the structured interface props directly into the React function execution signature
 export default function DropZone({ onFileSelect, status, error }: DropZoneProps) {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -18,7 +16,6 @@ export default function DropZone({ onFileSelect, status, error }: DropZoneProps)
   const handleFileValidation = (selectedFile: File) => {
     setLocalError(null);
     
-    // Immediate early-exit validation guards
     if (selectedFile.type !== "application/pdf") {
       setLocalError("Please upload a valid PDF file.");
       return;
@@ -30,7 +27,6 @@ export default function DropZone({ onFileSelect, status, error }: DropZoneProps)
     }
 
     setFile(selectedFile);
-    // 🚀 Hand off the valid file asset straight up to our parent controller pipeline!
     onFileSelect(selectedFile);
   };
 
@@ -48,7 +44,6 @@ export default function DropZone({ onFileSelect, status, error }: DropZoneProps)
     }
   };
 
-  // Prioritize parent server errors over basic local client side errors
   const activeError = error || localError;
 
   return (
@@ -103,7 +98,7 @@ export default function DropZone({ onFileSelect, status, error }: DropZoneProps)
 
       {activeError && (
         <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-lg text-sm text-center font-medium">
-          ⚠️ {activeError}
+          {activeError}
         </div>
       )}
     </div>

@@ -11,29 +11,23 @@ interface ReportPageProps {
 }
 
 export default async function HistoricalReportPage({ params }: ReportPageProps) {
-  // 1. Verify user authentication session context securely
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/");
   }
 
-  // Force cast user ID to a strict string since our guard statement proves it exists
   const currentUserId = session.user.id as string;
 
-  // 2. Unpack the dynamic router string ID safely from the Next.js async params promise
   const { id } = await params;
 
-  // 3. Fetch the record from Prisma
   const resumeRecord = await prisma.resume.findUnique({
     where: { id: id },
   });
 
-  // 🌟 THE SAFE FIX: Explicitly match against the cast string to prevent type mismatch comparison blocks
   if (!resumeRecord || resumeRecord.userId !== currentUserId) {
     notFound();
   }
 
-  // 4. Wrap the JSON parsing step in a try-catch block
   let parsedAnalysisData;
   try {
     if (!resumeRecord.rawAnalysisJson) {
@@ -43,7 +37,6 @@ export default async function HistoricalReportPage({ params }: ReportPageProps) 
   } catch (error) {
     console.error("Malformed or old database JSON entry caught:", error);
     
-    // Fallback object structure to prevent crashing your dashboard visual layouts
     parsedAnalysisData = {
       matchScore: resumeRecord.matchScore || 0,
       summary: "This historical log entry contains legacy text structure data and needs to be re-analyzed on the homepage platform.",

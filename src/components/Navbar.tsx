@@ -14,20 +14,17 @@ export default function Navbar() {
   return (
     <nav className="w-full h-16 border-b border-slate-900 bg-slate-950/90 backdrop-blur-md fixed top-0 left-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Brand Logo Identity */}
         <div className="flex items-center gap-2">
           <Link href="/" className="font-bold font-mono text-sm tracking-wider uppercase text-slate-200">
             Resume<span className="text-slate-400">.Metrics</span>
           </Link>
         </div>
 
-        {/* Dynamic Controls Conditional Grid */}
         <div className="flex items-center gap-4">
           {isLoading ? (
             <div className="w-8 h-8 rounded-full bg-slate-800 animate-pulse" />
           ) : session?.user ? (
             <div className="flex items-center gap-4">
-              {/* Dashboard Link - Only visible when logged in */}
               <Link 
                 href="/dashboard" 
                 className={`text-xs font-medium transition-colors ${
@@ -39,7 +36,6 @@ export default function Navbar() {
                 Dashboard
               </Link>
 
-              {/* Render authenticated user asset profile image safely */}
               {session.user.image && (
                 <Image
                   src={session.user.image}

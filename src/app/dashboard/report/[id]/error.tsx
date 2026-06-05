@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 
 interface ErrorBoundaryProps {
@@ -10,7 +10,6 @@ interface ErrorBoundaryProps {
 
 export default function ReportError({ error, reset }: ErrorBoundaryProps) {
   useEffect(() => {
-    // Log the application layer mismatch to your telemetry console safely
     console.error("Dynamic Report Subtree Breakdown:", error);
   }, [error]);
 
@@ -30,7 +29,7 @@ export default function ReportError({ error, reset }: ErrorBoundaryProps) {
             onClick={() => reset()}
             className="w-full py-2.5 text-xs font-bold uppercase tracking-wider bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 border border-rose-500/20 rounded-xl transition-all"
           >
-            🔄 Attempt Recovery Loop
+            Attempt Recovery Loop
           </button>
 
           <Link

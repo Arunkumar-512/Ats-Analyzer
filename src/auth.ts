@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [GitHub], // Auth.js automatically finds AUTH_GITHUB_ID and AUTH_GITHUB_SECRET
+  providers: [GitHub],
   session: {
     strategy: "jwt",
   },

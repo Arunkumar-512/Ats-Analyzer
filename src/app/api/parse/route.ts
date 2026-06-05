@@ -13,8 +13,6 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 🌟 FIX: Pass an empty dummy options object as the second parameter.
-    // This tells pdf-parse to skip loading its internal test file setup!
     const parsedData = await pdf(buffer, {});
     
     const cleanText = parsedData.text

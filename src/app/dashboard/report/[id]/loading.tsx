@@ -1,6 +1,3 @@
-// src/app/dashboard/report/[id]/loading.tsx
-import React from "react";
-
 export default function ReportLoading() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 pt-24 pb-12 px-4 animate-pulse">
