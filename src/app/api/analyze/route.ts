@@ -8,29 +8,32 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate
     const session = await auth();
-    console.log("MOBILE_DEBUG_SESSION_ID:", session?.user?.id);
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
-// 2. Defensive User Sync (Clean & Schema-Compatible)
+
+    // 2. Defensive User Sync (Hardened)
     let dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
     if (!dbUser) {
       try {
-        // Because 'email' is now optional in schema.prisma (String?), 
-        // we are no longer forced to provide it, and it won't trigger unique constraints.
+        // We sanitize the email: only use it if it's a valid non-empty string.
+        // This prevents unique constraint violations from empty strings.
+        const email = (session.user.email && session.user.email.trim() !== "") 
+                      ? session.user.email 
+                      : null;
+
         dbUser = await prisma.user.create({
           data: {
             id: session.user.id,
             name: session.user.name || "Mobile User",
-            // If the user has an email, add it; otherwise, it stays null in the DB
-            ...(session.user.email && { email: session.user.email }),
+            email: email, // Null is allowed now that schema is String?
           },
         });
       } catch (createError: any) {
-        // Final recovery: Check one last time if someone created it in the interim
+        // If creation fails due to a race condition (user exists now), fetch again
         dbUser = await prisma.user.findUnique({
           where: { id: session.user.id },
         });
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Resume text too short." }, { status: 400 });
     }
 
-    // 5. Generate Content (Schema remains the same)
+    // 5. Generate Content
     const jsonSchema = {
       type: Type.OBJECT,
       properties: {
