@@ -12,28 +12,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    // 2. Defensive User Sync (Fixes mobile unique constraint conflict)
-    // We check for the user by ID. If they don't exist, we create. 
-    // We do NOT update the email, as that is the source of the conflict.
+  // 2. Defensive User Sync (Hardened for Mobile Sessions)
     let dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
+    // If user exists, we proceed immediately. 
+    // If not, we only then attempt the creation.
     if (!dbUser) {
       try {
         dbUser = await prisma.user.create({
           data: {
             id: session.user.id,
-            email: session.user.email || `placeholder-${session.user.id}@auth.user`,
-            name: session.user.name,
+            email: session.user.email ?? `placeholder-${session.user.id}@auth.user`,
+            name: session.user.name ?? "Anonymous",
           },
         });
-      } catch (createError: any) {
-        // If creation fails due to unique constraint, try one last fetch
+      } catch (err) {
+        // If create fails (Unique Constraint), just re-fetch the user record
+        // This handles cases where the record was created by another process 
+        // in the milliseconds between the findUnique and the create.
         dbUser = await prisma.user.findUnique({
           where: { id: session.user.id },
         });
-        if (!dbUser) throw createError;
+        
+        if (!dbUser) throw new Error("Database sync failed.");
       }
     }
 
