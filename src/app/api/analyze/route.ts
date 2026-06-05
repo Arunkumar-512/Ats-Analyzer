@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate
     const session = await auth();
+    console.log("MOBILE_DEBUG_SESSION_ID:", session?.user?.id);
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
