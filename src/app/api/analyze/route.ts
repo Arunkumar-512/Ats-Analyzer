@@ -12,37 +12,36 @@ export async function POST(request: NextRequest) {
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
-
-  // 2. Defensive User Sync (Zero-Conflict Version)
+// 2. Defensive User Sync (Clean & Schema-Compatible)
     let dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
     if (!dbUser) {
       try {
-        // We only provide the ID and Name. 
-        // We exclude email entirely if it causes conflicts.
+        // Because 'email' is now optional in schema.prisma (String?), 
+        // we are no longer forced to provide it, and it won't trigger unique constraints.
         dbUser = await prisma.user.create({
           data: {
             id: session.user.id,
             name: session.user.name || "Mobile User",
-            // If your schema requires an email, use a truly random string to avoid collisions
-            email: session.user.email || `user_${Date.now()}_${Math.random().toString(36).substring(7)}@auth.local`,
+            // If the user has an email, add it; otherwise, it stays null in the DB
+            ...(session.user.email && { email: session.user.email }),
           },
         });
       } catch (createError: any) {
-        // If it fails with P2002 (Unique Constraint), try to find the user by ID
-        // one last time. If they exist, we use them.
+        // Final recovery: Check one last time if someone created it in the interim
         dbUser = await prisma.user.findUnique({
           where: { id: session.user.id },
         });
 
         if (!dbUser) {
           console.error("SYNC_CREATION_FAILED:", createError);
-          throw new Error("Unable to create user profile in database.");
+          throw new Error("Unable to sync user with database.");
         }
       }
     }
+
     // 3. Initialize Gemini
     if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY missing.");
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
