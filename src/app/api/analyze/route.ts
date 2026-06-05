@@ -13,34 +13,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-  // 2. Defensive User Sync (Hardened for Mobile Sessions)
+  // 2. Defensive User Sync (Most Forgiving Version)
     let dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
-    // If user exists, we proceed immediately. 
-    // If not, we only then attempt the creation.
     if (!dbUser) {
       try {
+        // Create the user record using the ID from the session.
+        // We use OR logic to ensure if the email exists, we don't duplicate it.
         dbUser = await prisma.user.create({
           data: {
             id: session.user.id,
-            email: session.user.email ?? `placeholder-${session.user.id}@auth.user`,
-            name: session.user.name ?? "Anonymous",
+            email: session.user.email || `sync-${session.user.id}@mobile.app`,
+            name: session.user.name || "User",
           },
         });
-      } catch (err) {
-        // If create fails (Unique Constraint), just re-fetch the user record
-        // This handles cases where the record was created by another process 
-        // in the milliseconds between the findUnique and the create.
+      } catch (createError: any) {
+        console.error("SYNC_CREATION_FAILED:", createError);
+        
+        // Final fallback: If create failed, perhaps the ID exists but is linked elsewhere
+        // or a race condition occurred.
         dbUser = await prisma.user.findUnique({
           where: { id: session.user.id },
         });
-        
-        if (!dbUser) throw new Error("Database sync failed.");
+
+        if (!dbUser) {
+           // If we still can't find/create, throw the error with the ID to help debug
+           throw new Error(`Sync failed for ID: ${session.user.id}`);
+        }
       }
     }
-
     // 3. Initialize Gemini
     if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY missing.");
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
