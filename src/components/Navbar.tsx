@@ -3,9 +3,12 @@
 import React from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
   const isLoading = status === "loading";
 
   return (
@@ -13,9 +16,9 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Brand Logo Identity */}
         <div className="flex items-center gap-2">
-          <span className="font-bold font-mono text-sm tracking-wider uppercase text-slate-200">
+          <Link href="/" className="font-bold font-mono text-sm tracking-wider uppercase text-slate-200">
             Resume<span className="text-slate-400">.Metrics</span>
-          </span>
+          </Link>
         </div>
 
         {/* Dynamic Controls Conditional Grid */}
@@ -23,7 +26,19 @@ export default function Navbar() {
           {isLoading ? (
             <div className="w-8 h-8 rounded-full bg-slate-800 animate-pulse" />
           ) : session?.user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              {/* Dashboard Link - Only visible when logged in */}
+              <Link 
+                href="/dashboard" 
+                className={`text-xs font-medium transition-colors ${
+                  pathname === "/dashboard" 
+                    ? "text-white underline decoration-rose-500 underline-offset-4" 
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Dashboard
+              </Link>
+
               {/* Render authenticated user asset profile image safely */}
               {session.user.image && (
                 <Image
@@ -34,9 +49,7 @@ export default function Navbar() {
                   className="rounded-full border border-slate-700 shadow-md"
                 />
               )}
-              <span className="text-xs font-mono text-slate-400 hidden sm:inline">
-                {session.user.name}
-              </span>
+              
               <button
                 onClick={() => signOut()}
                 className="px-3 py-1.5 text-xs font-medium bg-slate-900 border border-slate-800 hover:border-rose-500/30 hover:bg-rose-500/5 text-slate-400 hover:text-rose-400 rounded-lg transition-all"
