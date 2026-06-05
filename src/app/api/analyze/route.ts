@@ -7,7 +7,6 @@ import { auth } from "@/auth";
 export async function POST(request: NextRequest) {
   try {
     // 1. Authenticate Request
-    // We pass the request to auth() to ensure it reads the headers/cookies correctly
     const session = await auth();
     
     if (!session || !session.user?.id) {
@@ -72,9 +71,9 @@ export async function POST(request: NextRequest) {
 
     const userPrompt = `${sanitizedJobDescription ? `Job: ${sanitizedJobDescription}\n\n` : ""}Resume: ${safeResumeText.trim()}`;
 
-    // 4. Generate Content
+    // 4. Generate Content with updated stable model
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash", // Updated from gemini-1.5-flash
       contents: userPrompt,
       config: {
         systemInstruction,
