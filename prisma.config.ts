@@ -1,11 +1,5 @@
-// prisma.config.ts
 import "dotenv/config";
-import { defineConfig } from "prisma/config";
-
-// Force load dotenv from the root explicit workspace directory just in case paths shifted
-import path from "path";
-import dotenv from "dotenv";
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -13,7 +7,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    // 🌟 THE FIX: Fallback string protects the configuration validation runner from throwing an error if env is briefly undefined during build loops
-    url: process.env.DATABASE_URL || "postgresql://mock_user:mock_pass@localhost:5432/mock_db",
+    // Using the built-in env() helper is the recommended practice in Prisma 7
+    // It automatically handles the resolution of the environment variable
+    url: env("DATABASE_URL") || "postgresql://mock_user:mock_pass@localhost:5432/mock_db",
   },
 });

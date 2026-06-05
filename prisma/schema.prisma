@@ -1,6 +1,5 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -8,29 +7,27 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
-// 🌟 UPDATED USER MODEL (Compatible with NextAuth)
 model User {
-  id               String         @id @default(cuid())
-  name             String?
-  email            String         @unique
-  emailVerified    DateTime?
-  image            String?
-  createdAt        DateTime       @default(now())
-  
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+
   // SaaS Billing Parameters
-  stripeCustomerId String?        @unique
-  isPremium        Boolean        @default(false)
+  stripeCustomerId String?  @unique
+  isPremium        Boolean  @default(false)
 
-  // NextAuth Session Security
-  accounts         Account[]
-  sessions         Session[]
+  // Required by Auth.js
+  accounts      Account[]
+  sessions      Session[]
 
-  // Relational Ownership Links
-  resumes          Resume[]
-  coverLetters     CoverLetter[]
+  // Your Custom Relations
+  resumes       Resume[]
+  coverLetters  CoverLetter[]
 }
 
-// 🌟 NEW NEXTAUTH MODEL: Handles OAuth Account Linking (Google, GitHub, etc.)
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -50,7 +47,6 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
-// 🌟 NEW NEXTAUTH MODEL: Handles Database Session Tokens
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -59,7 +55,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Saved Resume Metric Documents
 model Resume {
   id              String   @id @default(cuid())
   userId          String
@@ -69,10 +64,9 @@ model Resume {
   rawAnalysisJson String   @db.Text
   createdAt       DateTime @default(now())
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Generated Cover Letter Nodes
 model CoverLetter {
   id               String   @id @default(cuid())
   userId           String
@@ -81,5 +75,5 @@ model CoverLetter {
   generatedContent String   @db.Text
   createdAt        DateTime @default(now())
 
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

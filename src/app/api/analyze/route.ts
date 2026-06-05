@@ -10,41 +10,37 @@ export async function POST(request: NextRequest) {
     const session = await auth();
     
     if (!session || !session.user?.id) {
-      console.error("AUTH_FAILURE: Session is null or user ID missing.");
-      return NextResponse.json(
-        { error: "Unauthorized. Please ensure you are logged in." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-    // 2. Initialize Gemini client
+    // 2. Ensure User exists (Handles OAuth-to-DB sync safely)
+    // We use a fallback for email to prevent database unique constraint violations
+    const dbUser = await prisma.user.upsert({
+      where: { id: session.user.id },
+      update: {}, 
+      create: {
+        id: session.user.id,
+        email: session.user.email || `placeholder-${session.user.id}@auth.user`,
+        name: session.user.name,
+      },
+    });
+
+    // 3. Initialize Gemini client
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY environment variable is not set.");
     }
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    // 3. Parse and Validate Body
+    // 4. Parse and Validate Body
     const body = await request.json().catch(() => null);
-    if (!body) {
-      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-    }
+    if (!body) return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
 
     const { resumeText, jobDescription, fileName } = body;
-
     if (!resumeText || resumeText.trim().length < 100) {
-      return NextResponse.json(
-        { error: "Resume text is too short." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Resume text is too short." }, { status: 400 });
     }
 
-    const safeResumeText = resumeText as string;
-    const safeFileName = (fileName as string) || "Untitled_Resume.pdf";
-    const sanitizedJobDescription = jobDescription && (jobDescription as string).trim().length > 10
-      ? (jobDescription as string).trim()
-      : null;
-
-    // Define JSON Schema
+    // 5. Generate Content
     const jsonSchema = {
       type: Type.OBJECT,
       properties: {
@@ -67,35 +63,33 @@ export async function POST(request: NextRequest) {
       required: ["matchScore", "summary", "strengths", "keywordGaps", "actionItems"]
     };
 
-    const systemInstruction = `You are an elite corporate technical recruiter. Respond strictly with valid JSON following the schema.`;
+    const userPrompt = `${jobDescription ? `Job: ${jobDescription}\n\n` : ""}Resume: ${resumeText.trim()}`;
 
-    const userPrompt = `${sanitizedJobDescription ? `Job: ${sanitizedJobDescription}\n\n` : ""}Resume: ${safeResumeText.trim()}`;
-
-    // 4. Generate Content with updated stable model
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", // Updated from gemini-1.5-flash
+      model: "gemini-2.5-flash",
       contents: userPrompt,
       config: {
-        systemInstruction,
+        systemInstruction: "You are an elite corporate technical recruiter. Respond strictly with valid JSON.",
         responseMimeType: "application/json",
         responseSchema: jsonSchema,
         temperature: 0.2,
       }
     });
 
-    const responseText = response.text;
-    if (!responseText) throw new Error("Model returned empty response.");
+    // Extract text safely
+    const rawText = response.text;
+    if (!rawText) throw new Error("Model returned empty response.");
+    
+    const analysisData: AnalysisResponse = JSON.parse(rawText);
 
-    const analysisData: AnalysisResponse = JSON.parse(responseText);
-
-    // 5. Save to Database
+    // 6. Save to Database
     const savedResumeRecord = await prisma.resume.create({
       data: {
-        userId: session.user.id,
-        fileName: safeFileName,
-        extractedText: safeResumeText,
+        userId: dbUser.id,
+        fileName: (fileName as string) || "Untitled_Resume.pdf",
+        extractedText: resumeText as string,
         matchScore: analysisData.matchScore,
-        rawAnalysisJson: responseText,
+        rawAnalysisJson: rawText,
       },
     });
 
@@ -103,9 +97,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error("ANALYSIS_ROUTE_ERROR:", error);
-    return NextResponse.json(
-      { error: error.message || "An unexpected error occurred." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || "An unexpected database or AI error occurred." }, { status: 500 });
   }
 }
