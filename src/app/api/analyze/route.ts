@@ -13,34 +13,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
-  // 2. Defensive User Sync (Most Forgiving Version)
+  // 2. Defensive User Sync (Zero-Conflict Version)
     let dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
     if (!dbUser) {
       try {
-        // Create the user record using the ID from the session.
-        // We use OR logic to ensure if the email exists, we don't duplicate it.
+        // We only provide the ID and Name. 
+        // We exclude email entirely if it causes conflicts.
         dbUser = await prisma.user.create({
           data: {
             id: session.user.id,
-            email: session.user.email || `sync-${session.user.id}@mobile.app`,
-            name: session.user.name || "User",
+            name: session.user.name || "Mobile User",
+            // If your schema requires an email, use a truly random string to avoid collisions
+            email: session.user.email || `user_${Date.now()}_${Math.random().toString(36).substring(7)}@auth.local`,
           },
         });
       } catch (createError: any) {
-        console.error("SYNC_CREATION_FAILED:", createError);
-        
-        // Final fallback: If create failed, perhaps the ID exists but is linked elsewhere
-        // or a race condition occurred.
+        // If it fails with P2002 (Unique Constraint), try to find the user by ID
+        // one last time. If they exist, we use them.
         dbUser = await prisma.user.findUnique({
           where: { id: session.user.id },
         });
 
         if (!dbUser) {
-           // If we still can't find/create, throw the error with the ID to help debug
-           throw new Error(`Sync failed for ID: ${session.user.id}`);
+          console.error("SYNC_CREATION_FAILED:", createError);
+          throw new Error("Unable to create user profile in database.");
         }
       }
     }
